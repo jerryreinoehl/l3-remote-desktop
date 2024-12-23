@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 import argparse
@@ -104,6 +105,23 @@ class RDPSessionSettings:
     SEC_EXT = "ext"
     SEC_AAD = "aad"
 
+    @dataclass
+    class Floatbar:
+
+        class Visibility(StrEnum):
+            VISIBLE = "visible"
+            HIDDEN = "hidden"
+
+        class Show(StrEnum):
+            ALWAYS = "always"
+            FULLSCREEN = "fullscreen"
+            WINDOW = "window"
+
+        sticky: bool = False
+        # Corresponds to /floatbar:default xfreerdp argument.
+        visibility: Visibility = None
+        show: Show = None
+
     def __init__(self):
         self._server: str = None
         self._port: int = None
@@ -115,6 +133,7 @@ class RDPSessionSettings:
         self._security_protocol: str = None
         self._smartcard: str = None
         self._smartcard_logon_pin: str = None
+        self.floatbar: self.Floatbar = None
 
     def server(self, value: str):
         self._server = value
@@ -171,6 +190,10 @@ class FreeRDPSession:
         if self._settings._clipboard:
             cmd.append("/clipboard")
 
+        floatbar = self._get_floatbar_argument()
+        if floatbar is not None:
+            cmd.append(floatbar)
+
         if self._settings._security_protocol:
             cmd.append(f"/sec:{self._settings._security_protocol}")
 
@@ -200,6 +223,24 @@ class FreeRDPSession:
 
         print(cmd)
         return cmd
+
+    def _get_floatbar_argument(self):
+        if self._settings.floatbar is None:
+            return None
+
+        args = []
+        floatbar = self._settings.floatbar
+
+        if floatbar.sticky is not None:
+            args.append("sticky:" + ("on" if floatbar.sticky else "off"))
+
+        if floatbar.visibility is not None:
+            args.append("default:" + floatbar.visibility.value)
+
+        if floatbar.show is not None:
+            args.append("show:" + floatbar.show.value)
+
+        return "/floatbar:" + ",".join(args)
 
     def launch(self):
         cmd = self._generate_command()
@@ -283,6 +324,9 @@ def main():
         .clipboard(True) \
         .smartcard("") \
         .smartcard_logon_pin(ctx.smartcard_pin)
+
+    rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
+
     print(rdp_settings.__dict__)
 
     rdp_session = FreeRDPSession(rdp_settings)
