@@ -25,7 +25,9 @@ class Context:
 
 class UI:
 
-    CYAN = "1;36"
+    BOLD_CYAN = "1;36"
+    BOLD_GREEN = "1;32"
+    GREEN = "32"
 
     def __init__(self, debug=False):
         self._debug = debug
@@ -40,12 +42,18 @@ class UI:
         print(s, **kwargs)
 
     def input(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
+        self.print(prompt, end="", color=self.BOLD_CYAN, flush=True, **kwargs)
         return input()
 
     def getpass(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
+        self.print(prompt, end="", color=self.BOLD_CYAN, flush=True, **kwargs)
         return getpass.getpass(prompt="")
+
+    def info(self, msg, **kwargs):
+        self.print(msg, color=self.GREEN, **kwargs)
+
+    def success(self, msg, **kwargs):
+        self.print(msg, color=self.BOLD_GREEN, **kwargs)
 
     def error(self, msg):
         print("Error: " + msg)
@@ -253,10 +261,16 @@ def main():
 
     ctx = load_context(ui, args.config)
 
+    ui.info("Connecting to portal...")
     session = PortalSession()
+    ui.success("Connected.")
     # Load user info right before authenticating so token doesn't expire.
     load_user_info(ui, ctx)
+
+    ui.info("Authenticating...")
     session.authenticate(ctx.username, ctx.password, ctx.pin, ctx.token)
+    ui.success("Authenticated.")
+
     rdp_settings = session.request_rdp_session(ctx.domain)
 
     print(rdp_settings.__dict__)
@@ -272,6 +286,8 @@ def main():
     print(rdp_settings.__dict__)
 
     rdp_session = FreeRDPSession(rdp_settings)
+
+    ui.info("Launching RDP session...")
     rdp_session.launch()
 
 
