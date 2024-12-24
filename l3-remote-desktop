@@ -136,6 +136,9 @@ class RDPSessionSettings:
     class Gateway:
         gateway: str = None
         access_token: str = None
+        user: str = None
+        password: str = None
+        domain: str = None
 
     @dataclass
     class Floatbar:
@@ -165,8 +168,10 @@ class RDPSessionSettings:
         pin: str = None
 
     def __init__(self):
+        self.user: str = None
         self.server: str = None
         self.port: int = None
+        self.domain: str = None
         self.fullscreen: bool = False
         self.clipboard: bool = False
         self.security_protocol: self.SecurityProtocol = None
@@ -206,9 +211,10 @@ class FreeRDPSession:
         smartcard_logon = self._get_smartcard_logon_argument()
         smartcard_logon and cmd.append(smartcard_logon)
 
-        self._settings.server and cmd.append(f"/v:{self._settings.server}")
-
-        self._settings.port and cmd.append(f"/port:{self._settings.port}")
+        self._settings.user and cmd.append("/u:" + self._settings.user)
+        self._settings.server and cmd.append("/v:" + self._settings.server)
+        self._settings.port and cmd.append("/port:" + str(self._settings.port))
+        self._settings.domain and cmd.append("/d:" + self._settings.domain)
 
         gateway = self._get_gateway_argument()
         gateway and cmd.append(gateway)
@@ -224,6 +230,9 @@ class FreeRDPSession:
 
         gateway.gateway and args.append("g:" + gateway.gateway)
         gateway.access_token and args.append("access-token:" + gateway.access_token)
+        gateway.user and args.append("u:" + gateway.user)
+        gateway.password and args.append("p:" + gateway.password)
+        gateway.domain and args.append("d:" + gateway.domain)
 
         if not args:
             return None
