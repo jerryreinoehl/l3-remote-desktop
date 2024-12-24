@@ -8,6 +8,9 @@ Authenticate with L3 portal and launch remote desktop session.
 * `python3`
 * `python3-requests`
 * `freerdp`
+* `ccid` (Smartcard)
+* `opensc` (Smartcard)
+* `pcsclite` (Smartcard)
 
 
 ## Configuration
@@ -28,3 +31,23 @@ The configuration file can be overridden with the `-c` or `--config` argument.
 * `freerdp: str`: FreeRDP executable (defaults to `xfreerdp3`).
 * `fullscreen: bool`: Launch RDP in fullscreen mode.
 * `verbose: bool`: Enable verbose output.
+
+
+## Smartcard Configuration
+
+### Arch Linux
+
+Install `ccid`, `opensc`, and `pcsclite`.
+
+```
+sudo pacman -Syu
+sudo pacman -S ccid opensc pcsclite
+```
+
+Enable `pcscd.socket`.
+
+```
+sudo systemctl enable --now pcscd.socket
+```
+
+See [Smartcards](https://wiki.archlinux.org/title/Smartcards) for more info.
