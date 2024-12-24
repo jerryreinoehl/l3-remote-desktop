@@ -1,0 +1,9 @@
+---
+username: "first.last@l3harris.com"
+password: "YourComputerPassword"
+rsa_pin: "123456"
+domain: "USGVTED-ABCDEF1.gvl.is.l-3com.com"
+smartcard_pin: "12345678"
+freerdp: "xfreerdp3"
+fullscreen: true
+verbose: true
