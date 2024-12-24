@@ -1,4 +1,5 @@
 ---
+# Put this file at `$XDG_CONFIG_HOME/l3-remote-desktop/l3-remote-desktop.yml`.
 username: "first.last@l3harris.com"
 password: "YourComputerPassword"
 rsa_pin: "123456"
