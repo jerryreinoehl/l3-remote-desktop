@@ -26,9 +26,10 @@ class Context:
 
 class UI:
 
-    BOLD_CYAN = "1;36"
     BOLD_GREEN = "1;32"
+    BOLD_CYAN = "1;36"
     GREEN = "32"
+    CYAN = "36"
 
     def __init__(self, debug=False):
         self._debug = debug
@@ -43,11 +44,11 @@ class UI:
         print(s, **kwargs)
 
     def input(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.BOLD_CYAN, flush=True, **kwargs)
+        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
         return input()
 
     def getpass(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.BOLD_CYAN, flush=True, **kwargs)
+        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
         return getpass.getpass(prompt="")
 
     def info(self, msg, **kwargs):
@@ -364,20 +365,18 @@ def load_context(ui, config):
 
 
 def load_user_info(ui, ctx):
-    prompt_width = 15
-
     if ctx.username is None:
-        ctx.username = ui.input("Username: ", width=prompt_width)
+        ctx.username = ui.input("Username: ")
     if ctx.domain is None:
-        ctx.domain = ui.input("Domain: ", width=prompt_width)
+        ctx.domain = ui.input("Domain: ")
     if ctx.password is None:
-        ctx.password = ui.getpass("Password: ", width=prompt_width)
+        ctx.password = ui.getpass("Password: ")
     if ctx.smartcard_pin is None:
-        ctx.smartcard_pin = ui.getpass("Smartcard Pin: ", width=prompt_width)
+        ctx.smartcard_pin = ui.getpass("Smartcard Pin: ")
     if ctx.pin is None:
-        ctx.pin = ui.getpass("RSA Pin: ", width=prompt_width)
+        ctx.pin = ui.getpass("RSA Pin: ")
     if ctx.token is None:
-        ctx.token = ui.input("Token: ", width=prompt_width)
+        ctx.token = ui.input("Token: ")
 
 
 def parse_args():
