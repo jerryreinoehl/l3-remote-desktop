@@ -100,11 +100,12 @@ class RDPParser:
 
 class RDPSessionSettings:
 
-    SEC_RDP = "rdp"
-    SEC_TLS = "tls"
-    SEC_NLA = "nla"
-    SEC_EXT = "ext"
-    SEC_AAD = "aad"
+    class SecurityProtocol(StrEnum):
+        RDP = "rdp"
+        TLS = "tls"
+        NLA = "nla"
+        EXT = "ext"
+        AAD = "aad"
 
     @dataclass
     class Gateway:
@@ -133,15 +134,11 @@ class RDPSessionSettings:
         self.port: int = None
         self.fullscreen: bool = False
         self.clipboard: bool = False
-        self._security_protocol: str = None
+        self.security_protocol: self.SecurityProtocol = None
         self._smartcard: str = None
         self._smartcard_logon_pin: str = None
         self.gateway: self.Gateway = None
         self.floatbar: self.Floatbar = None
-
-    def security_protocol(self, value: str):
-        self._security_protocol = value
-        return self
 
     def smartcard(self, value: str):
         self._smartcard = value
@@ -170,8 +167,8 @@ class FreeRDPSession:
         if floatbar is not None:
             cmd.append(floatbar)
 
-        if self._settings._security_protocol:
-            cmd.append(f"/sec:{self._settings._security_protocol}")
+        if self._settings.security_protocol:
+            cmd.append("/sec:" + self._settings.security_protocol.value)
 
         if self._settings._smartcard is not None:
             if self._settings._smartcard == "":
@@ -311,13 +308,13 @@ def main():
     #    rdp_settings = RDPParser.parse(f.read())
 
     rdp_settings \
-        .security_protocol(RDPSessionSettings.SEC_RDP) \
         .smartcard("") \
         .smartcard_logon_pin(ctx.smartcard_pin)
 
     rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
+    rdp_settings.security_protocol = RDPSessionSettings.SecurityProtocol.RDP
 
     print(rdp_settings.__dict__)
 
