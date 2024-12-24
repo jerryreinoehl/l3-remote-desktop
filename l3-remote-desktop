@@ -23,6 +23,7 @@ class Context:
     token: str = None
     domain: str = None
     smartcard_pin: str = None
+    freerdp: str = "xfreerdp3"
 
 
 class UI:
@@ -184,9 +185,10 @@ class RDPSessionSettings:
 
 class FreeRDPSession:
 
-    def __init__(self, settings: RDPSessionSettings):
+    def __init__(self, settings: RDPSessionSettings, freerdp_exec="xfreerdp3"):
         self._settings = settings
         self._command = None
+        self._freerdp_exec = freerdp_exec
 
     @property
     def command(self):
@@ -195,7 +197,7 @@ class FreeRDPSession:
         return self._command
 
     def _generate_command(self):
-        cmd = ["xfreerdp3"]
+        cmd = [self._freerdp_exec]
 
         self._settings.fullscreen and cmd.append("/f")
         self._settings.clipboard and cmd.append("/clipboard")
@@ -451,6 +453,9 @@ def main():
     ui = UI(debug=args.verbose)
     ctx = load_context(ui, args.config)
 
+    if args.freerdp:
+        ctx.freerdp = args.freerdp
+
     cache = get_cache_path()
 
     if not ctx.domain:
@@ -472,7 +477,7 @@ def main():
         pin=ctx.smartcard_pin
     )
 
-    rdp_session = FreeRDPSession(rdp_settings)
+    rdp_session = FreeRDPSession(rdp_settings, freerdp_exec=ctx.freerdp)
 
     ui.info("Launching RDP session.")
     ui.log_exec(" ".join(rdp_session.command))
@@ -560,6 +565,7 @@ def parse_args():
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output."
     )
+    parser.add_argument("--freerdp", help="Name of FreeRDP executable")
 
     return parser.parse_args()
 
