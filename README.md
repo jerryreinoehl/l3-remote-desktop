@@ -50,4 +50,5 @@ Enable `pcscd.socket`.
 sudo systemctl enable --now pcscd.socket
 ```
 
-See [Smartcards](https://wiki.archlinux.org/title/Smartcards) for more info.
+See [Smartcards](https://wiki.archlinux.org/title/Smartcards) for more info and
+troubleshooting.
