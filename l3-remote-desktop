@@ -54,7 +54,7 @@ class UI:
         return input()
 
     def getpass(self, prompt, **kwargs):
-        self.print("??? " + prompt, end="", color=self.CYAN, flush=True, **kwargs)
+        self.print("??? " + prompt, end="", color=self.MAGENTA, flush=True, **kwargs)
         return getpass.getpass(prompt="")
 
     def log_request(self, msg, **kwargs):
