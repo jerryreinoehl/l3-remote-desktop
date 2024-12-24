@@ -129,24 +129,26 @@ class RDPSessionSettings:
         visibility: Visibility = None
         show: Show = None
 
+    @dataclass
+    class Smartcard:
+        # Redirect the smartcard devices containing any of the <str> in their
+        # names `man 1 xfreerdp3`.
+        devices: list[str] = None
+
+    @dataclass
+    class SmartcardLogon:
+        pin: str = None
+
     def __init__(self):
         self.server: str = None
         self.port: int = None
         self.fullscreen: bool = False
         self.clipboard: bool = False
         self.security_protocol: self.SecurityProtocol = None
-        self._smartcard: str = None
-        self._smartcard_logon_pin: str = None
+        self.smartcard: self.Smartcard = None
+        self.smartcard_logon: self.SmartcardLogon = None
         self.gateway: self.Gateway = None
         self.floatbar: self.Floatbar = None
-
-    def smartcard(self, value: str):
-        self._smartcard = value
-        return self
-
-    def smartcard_logon_pin(self, value: str):
-        self._smartcard_logon_pin = value
-        return self
 
 
 class FreeRDPSession:
@@ -157,37 +159,27 @@ class FreeRDPSession:
     def _generate_command(self):
         cmd = ["xfreerdp3"]
 
-        if self._settings.fullscreen:
-            cmd.append("/f")
-
-        if self._settings.clipboard:
-            cmd.append("/clipboard")
+        self._settings.fullscreen and cmd.append("/f")
+        self._settings.clipboard and cmd.append("/clipboard")
 
         floatbar = self._get_floatbar_argument()
-        if floatbar is not None:
-            cmd.append(floatbar)
+        floatbar and cmd.append(floatbar)
 
         if self._settings.security_protocol:
             cmd.append("/sec:" + self._settings.security_protocol.value)
 
-        if self._settings._smartcard is not None:
-            if self._settings._smartcard == "":
-                cmd.append("/smartcard")
-            else:
-                cmd.append(f"/smartcard:{self._settings._smartcard}")
+        smartcard = self._get_smartcard_argument()
+        smartcard and cmd.append(smartcard)
 
-        if self._settings._smartcard_logon_pin:
-            cmd.append(f"/smartcard-logon:pin:{self._settings._smartcard_logon_pin}")
+        smartcard_logon = self._get_smartcard_logon_argument()
+        smartcard_logon and cmd.append(smartcard_logon)
 
-        if self._settings.server:
-            cmd.append(f"/v:{self._settings.server}")
+        self._settings.server and cmd.append(f"/v:{self._settings.server}")
 
-        if self._settings.port:
-            cmd.append(f"/port:{self._settings.port}")
+        self._settings.port and cmd.append(f"/port:{self._settings.port}")
 
         gateway = self._get_gateway_argument()
-        if gateway is not None:
-            cmd.append(gateway)
+        gateway and cmd.append(gateway)
 
         print(cmd)
         return cmd
@@ -199,11 +191,8 @@ class FreeRDPSession:
         args = []
         gateway = self._settings.gateway
 
-        if gateway.gateway:
-            args.append("g:" + gateway.gateway)
-
-        if gateway.access_token:
-            args.append("access-token:" + gateway.access_token)
+        gateway.gateway and args.append("g:" + gateway.gateway)
+        gateway.access_token and args.append("access-token:" + gateway.access_token)
 
         if not args:
             return None
@@ -230,6 +219,32 @@ class FreeRDPSession:
             return None
 
         return "/floatbar:" + ",".join(args)
+
+    def _get_smartcard_argument(self):
+        if self._settings.smartcard is None:
+            return None
+
+        smartcard = self._settings.smartcard
+        arg = "/smartcard"
+        if smartcard.devices:
+            arg += ":" + ",".join(smartcard.devices)
+
+        return arg
+
+    def _get_smartcard_logon_argument(self):
+        if self._settings.smartcard_logon is None:
+            return None
+
+        smartcard_logon = self._settings.smartcard_logon
+        args = []
+
+        smartcard_logon.pin and args.append("pin:" + smartcard_logon.pin)
+
+        arg = "/smartcard-logon"
+        if args:
+            arg += ":" + ",".join(args)
+
+        return arg
 
     def launch(self):
         cmd = self._generate_command()
@@ -308,13 +323,14 @@ def main():
     #    rdp_settings = RDPParser.parse(f.read())
 
     rdp_settings \
-        .smartcard("") \
         .smartcard_logon_pin(ctx.smartcard_pin)
 
     rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
     rdp_settings.security_protocol = RDPSessionSettings.SecurityProtocol.RDP
+    rdp_settings.smartcard = RDPSessionSettings.Smartcard()
+    rdp_settings.smartcard_logon = RDPSessionSettings.SmartcardLogon(pin=ctx.smartcard_pin)
 
     print(rdp_settings.__dict__)
 
