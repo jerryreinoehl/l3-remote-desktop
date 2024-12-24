@@ -475,7 +475,6 @@ def main():
     except PortalSession.RDPRequestError:
         ui.fatal("Failed to authenticate.")
 
-
     if not ctx.smartcard_pin:
         ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
 
@@ -549,21 +548,6 @@ class LoadAuthenticationInfo:
             self._ctx.rsa_pin,
             self._ctx.token,
         )
-
-
-def load_user_info(ui, ctx):
-    if ctx.username is None:
-        ctx.username = ui.input("Enter username: ")
-    if ctx.domain is None:
-        ctx.domain = ui.input("Enter domain: ")
-    if ctx.password is None:
-        ctx.password = ui.getpass("Enter password: ")
-    if ctx.smartcard_pin is None:
-        ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
-    if ctx.rsa_pin is None:
-        ctx.rsa_pin = ui.getpass("Enter RSA pin: ")
-    if ctx.token is None:
-        ctx.token = ui.input("Enter RSA token: ")
 
 
 def parse_args():
