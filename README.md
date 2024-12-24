@@ -20,11 +20,11 @@ The configuration file can be overridden with the `-c` or `--config` argument.
 
 ### Configuration Options
 
-* `username`: L3 portal username (email address).
-* `password`: L3 portal password.
-* `rsa_pin`: RSA PIN.
-* `domain`: RDP domain (computer name).
-* `smartcard_pin`: Smartcard PIN.
-* `freerdp`: FreeRDP executable (defaults to `xfreerdp3`).
-* `fullscreen`: Launch RDP in fullscreen mode.
-* `verbose`: Enable verbose output.
+* `username: str`: L3 portal username (email address).
+* `password: str`: L3 portal password.
+* `rsa_pin: str`: RSA PIN.
+* `domain: str`: RDP domain (computer name).
+* `smartcard_pin: str`: Smartcard PIN.
+* `freerdp: str`: FreeRDP executable (defaults to `xfreerdp3`).
+* `fullscreen: bool`: Launch RDP in fullscreen mode.
+* `verbose: bool`: Enable verbose output.
