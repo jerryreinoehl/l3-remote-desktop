@@ -26,9 +26,11 @@ class Context:
 
 class UI:
 
+    BOLD_BLACK = "1;30"
     BOLD_GREEN = "1;32"
     BOLD_CYAN = "1;36"
     GREEN = "32"
+    MAGENTA = "35"
     CYAN = "36"
 
     def __init__(self, debug=False):
@@ -50,6 +52,11 @@ class UI:
     def getpass(self, prompt, **kwargs):
         self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
         return getpass.getpass(prompt="")
+
+    def debug(self, msg, **kwargs):
+        if not self._debug:
+            return
+        self.print(msg, color=self.MAGENTA, **kwargs)
 
     def info(self, msg, **kwargs):
         self.print(msg, color=self.GREEN, **kwargs)
@@ -156,6 +163,13 @@ class FreeRDPSession:
 
     def __init__(self, settings: RDPSessionSettings):
         self._settings = settings
+        self._command = None
+
+    @property
+    def command(self):
+        if self._command is None:
+            self._command = self._generate_command()
+        return self._command
 
     def _generate_command(self):
         cmd = ["xfreerdp3"]
@@ -182,7 +196,6 @@ class FreeRDPSession:
         gateway = self._get_gateway_argument()
         gateway and cmd.append(gateway)
 
-        print(cmd)
         return cmd
 
     def _get_gateway_argument(self):
@@ -248,10 +261,8 @@ class FreeRDPSession:
         return arg
 
     def launch(self):
-        cmd = self._generate_command()
-        p = subprocess.Popen(cmd)
+        p = subprocess.Popen(self.command)
         p.wait()
-        breakpoint()
 
 
 class PortalSession:
@@ -299,12 +310,12 @@ class PortalSession:
 
 
 def main():
-    ui = UI()
     args = parse_args()
 
     if args.config is None:
         args.config = get_config_path()
 
+    ui = UI(debug=args.verbose)
     ctx = load_context(ui, args.config)
 
     ui.info("Connecting to portal...")
@@ -333,12 +344,11 @@ def main():
     rdp_settings.smartcard = RDPSessionSettings.Smartcard()
     rdp_settings.smartcard_logon = RDPSessionSettings.SmartcardLogon(pin=ctx.smartcard_pin)
 
-    print(rdp_settings.__dict__)
-
     rdp_session = FreeRDPSession(rdp_settings)
 
     ui.info("Launching RDP session...")
-    rdp_session.launch()
+    ui.debug("Executing: " + " ".join(rdp_session.command))
+    #rdp_session.launch()
 
 
 def get_config_path():
@@ -366,17 +376,17 @@ def load_context(ui, config):
 
 def load_user_info(ui, ctx):
     if ctx.username is None:
-        ctx.username = ui.input("Username: ")
+        ctx.username = ui.input("Enter username: ")
     if ctx.domain is None:
-        ctx.domain = ui.input("Domain: ")
+        ctx.domain = ui.input("Enter domain: ")
     if ctx.password is None:
-        ctx.password = ui.getpass("Password: ")
+        ctx.password = ui.getpass("Enter password: ")
     if ctx.smartcard_pin is None:
-        ctx.smartcard_pin = ui.getpass("Smartcard Pin: ")
+        ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
     if ctx.pin is None:
-        ctx.pin = ui.getpass("RSA Pin: ")
+        ctx.pin = ui.getpass("Enter RSA pin: ")
     if ctx.token is None:
-        ctx.token = ui.input("Token: ")
+        ctx.token = ui.input("Enter RSA token: ")
 
 
 def parse_args():
@@ -387,6 +397,9 @@ def parse_args():
 
     parser.add_argument(
         "-c", "--config", type=Path, help="Path to configuration file."
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output."
     )
 
     return parser.parse_args()
