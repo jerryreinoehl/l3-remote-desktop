@@ -26,6 +26,7 @@ class Context:
 
     freerdp: str = "xfreerdp3"
     fullscreen: bool = False
+    verbose: bool = False
 
 
 class UI:
@@ -43,6 +44,9 @@ class UI:
 
     def __init__(self, debug=False):
         self._debug = debug
+
+    def set_debug(self, enabled: bool):
+        self._debug = enabled
 
     def print(self, s, width=None, color=None, **kwargs):
         if width:
@@ -454,7 +458,7 @@ def main():
     if args.config is None:
         args.config = get_config_path()
 
-    ui = UI(debug=args.verbose)
+    ui = UI()
     ctx = load_context(ui, args.config)
 
     if args.username:
@@ -465,6 +469,11 @@ def main():
         ctx.freerdp = args.freerdp
     if args.fullscreen:
         ctx.fullscreen = args.fullscreen
+    if args.verbose:
+        ctx.verbose = args.verbose
+
+    if ctx.verbose:
+        ui.set_debug(True)
 
     cache = get_cache_path()
 

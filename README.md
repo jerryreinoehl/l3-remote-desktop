@@ -19,3 +19,4 @@ from `~/.config/l3-remote-desktop/l3-remote-desktop.yml`.
 * `smartcard_pin`: Smartcard PIN.
 * `freerdp`: FreeRDP executable (defaults to `xfreerdp3`).
 * `fullscreen`: Launch RDP in fullscreen mode.
+* `verbose`: Enable verbose output.
