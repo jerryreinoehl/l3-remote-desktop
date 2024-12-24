@@ -23,7 +23,9 @@ class Context:
     token: str = None
     domain: str = None
     smartcard_pin: str = None
+
     freerdp: str = "xfreerdp3"
+    fullscreen: bool = False
 
 
 class UI:
@@ -461,6 +463,8 @@ def main():
         ctx.domain = args.domain
     if args.freerdp:
         ctx.freerdp = args.freerdp
+    if args.fullscreen:
+        ctx.fullscreen = args.fullscreen
 
     cache = get_cache_path()
 
@@ -480,7 +484,8 @@ def main():
     if not ctx.smartcard_pin:
         ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
 
-    rdp_settings.fullscreen = True
+    if ctx.fullscreen:
+        rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
     rdp_settings.security_protocol = RDPSessionSettings.SecurityProtocol.RDP
@@ -572,6 +577,9 @@ def parse_args():
     )
     parser.add_argument("-u", "--username", help="L3 portal username (email address).")
     parser.add_argument("-d", "--domain", help="RDP domain (computer name).")
+    parser.add_argument(
+        "-f", "--fullscreen", action="store_true", help="Launch RDP session fullscreen."
+    )
 
     return parser.parse_args()
 
