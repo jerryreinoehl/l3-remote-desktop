@@ -87,13 +87,13 @@ class RDPParser:
 
             match key:
                 case "full address":
-                    settings.server(value)
+                    settings.server = value
                 case "gatewayaccesstoken":
                     settings.gateway.access_token = value
                 case "gatewayhostname":
                     settings.gateway.gateway = value
                 case "server port":
-                    settings.port(value)
+                    settings.port = value
 
         return settings
 
@@ -129,34 +129,18 @@ class RDPSessionSettings:
         show: Show = None
 
     def __init__(self):
-        self._server: str = None
-        self._port: int = None
-        self._fullscreen: bool = False
-        self._clipboard: bool = False
+        self.server: str = None
+        self.port: int = None
+        self.fullscreen: bool = False
+        self.clipboard: bool = False
         self._security_protocol: str = None
         self._smartcard: str = None
         self._smartcard_logon_pin: str = None
         self.gateway: self.Gateway = None
         self.floatbar: self.Floatbar = None
 
-    def server(self, value: str):
-        self._server = value
-        return self
-
-    def port(self, value: int):
-        self._port = value
-        return self
-
     def security_protocol(self, value: str):
         self._security_protocol = value
-        return self
-
-    def fullscreen(self, value: bool):
-        self._fullscreen = value
-        return self
-
-    def clipboard(self, value: bool):
-        self._clipboard = value
         return self
 
     def smartcard(self, value: str):
@@ -176,10 +160,10 @@ class FreeRDPSession:
     def _generate_command(self):
         cmd = ["xfreerdp3"]
 
-        if self._settings._fullscreen:
+        if self._settings.fullscreen:
             cmd.append("/f")
 
-        if self._settings._clipboard:
+        if self._settings.clipboard:
             cmd.append("/clipboard")
 
         floatbar = self._get_floatbar_argument()
@@ -198,11 +182,11 @@ class FreeRDPSession:
         if self._settings._smartcard_logon_pin:
             cmd.append(f"/smartcard-logon:pin:{self._settings._smartcard_logon_pin}")
 
-        if self._settings._server:
-            cmd.append(f"/v:{self._settings._server}")
+        if self._settings.server:
+            cmd.append(f"/v:{self._settings.server}")
 
-        if self._settings._port:
-            cmd.append(f"/port:{self._settings._port}")
+        if self._settings.port:
+            cmd.append(f"/port:{self._settings.port}")
 
         gateway = self._get_gateway_argument()
         if gateway is not None:
@@ -327,12 +311,12 @@ def main():
     #    rdp_settings = RDPParser.parse(f.read())
 
     rdp_settings \
-        .fullscreen(True) \
         .security_protocol(RDPSessionSettings.SEC_RDP) \
-        .clipboard(True) \
         .smartcard("") \
         .smartcard_logon_pin(ctx.smartcard_pin)
 
+    rdp_settings.fullscreen = True
+    rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
 
     print(rdp_settings.__dict__)
