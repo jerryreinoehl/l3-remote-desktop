@@ -30,6 +30,8 @@ class UI:
     BOLD_GREEN = "1;32"
     BOLD_CYAN = "1;36"
     GREEN = "32"
+    YELLOW = "33"
+    BLUE = "34"
     MAGENTA = "35"
     CYAN = "36"
 
@@ -46,23 +48,38 @@ class UI:
         print(s, **kwargs)
 
     def input(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
+        self.print("??? " + prompt, end="", color=self.MAGENTA, flush=True, **kwargs)
         return input()
 
     def getpass(self, prompt, **kwargs):
-        self.print(prompt, end="", color=self.CYAN, flush=True, **kwargs)
+        self.print("??? " + prompt, end="", color=self.CYAN, flush=True, **kwargs)
         return getpass.getpass(prompt="")
+
+    def log_request(self, msg, **kwargs):
+        if not self._debug:
+            return
+        self.print(">>> " + msg, color=self.CYAN, **kwargs)
+
+    def log_response(self, msg, **kwargs):
+        if not self._debug:
+            return
+        self.print("<<< " + msg, color=self.YELLOW, **kwargs)
+
+    def log_exec(self, msg, **kwargs):
+        if not self._debug:
+            return
+        self.print("/// " + msg, color=self.BLUE, **kwargs)
 
     def debug(self, msg, **kwargs):
         if not self._debug:
             return
-        self.print(msg, color=self.MAGENTA, **kwargs)
+        self.print(msg, color=self.BLUE, **kwargs)
 
     def info(self, msg, **kwargs):
-        self.print(msg, color=self.GREEN, **kwargs)
+        self.print("... " + msg, color=self.GREEN, **kwargs)
 
     def success(self, msg, **kwargs):
-        self.print(msg, color=self.BOLD_GREEN, **kwargs)
+        self.print("*** " + msg, color=self.BOLD_GREEN, **kwargs)
 
     def error(self, msg):
         print("Error: " + msg)
@@ -277,32 +294,82 @@ class PortalSession:
 
     def __init__(self):
         self._session = requests.Session()
-        self.initialize_session()
+        self._log_req_cb = None
+        self._log_res_cb = None
 
-    def test(self):
-        raise self.RDPRequestError("")
+    def log_request(self, request):
+        if not self._log_req_cb:
+            return
 
-    def initialize_session(self):
-        res = self._session.get("https://portal.l3t.com")
+        self._log_req_cb(f"{request.method} {request.url}")
+        for k, v in request.headers.items():
+            self._log_req_cb(f"{k}: {v}")
+
+    def log_response(self, response, log_content=False):
+        if not self._log_res_cb:
+            return
+
+        self._log_res_cb(f"[{response.status_code} {response.reason}] {response.url}")
+        for k, v in response.headers.items():
+            self._log_res_cb(f"{k}: {v}")
+
+        if log_content:
+            self._log_res_cb("")
+            for line in response.content.decode().splitlines():
+                self._log_res_cb(line)
+
+    def set_log_request_callback(self, log_req_cb):
+        self._log_req_cb = log_req_cb
+
+    def set_log_response_callback(self, log_res_cb):
+        self._log_res_cb = log_res_cb
+
+    def connect(self):
+        url = "https://portal.l3t.com/"
+
+        req = requests.Request("GET", url)
+        req = self._session.prepare_request(req)
+
+        self.log_request(req)
+
+        res = self._session.send(req)
+
+        self.log_response(res)
+
         if not res.ok:
             raise self.InitializationError()
 
     def authenticate(self, username, password, pin, token, vhost="standard"):
+        url = "https://portal.l3t.com/my.policy"
+
         data = dict(
             username=username,
             password=password,
             rsapassword=pin + token,
             vhost=vhost,
         )
-        res = self._session.post("https://portal.l3t.com/my.policy", data=data)
+
+        req = requests.Request("POST", url, data=data)
+        req = self._session.prepare_request(req)
+
+        self.log_request(req)
+        res = self._session.send(req)
+        self.log_response(res)
+
         if not res.ok:
             raise self.AuthenticationError()
 
     def request_rdp_session(self, domain):
         domain_b64 = base64.b64encode(bytes(domain, "utf-8")).decode()
-        res = self._session.get(
-            f"https://portal.l3t.com/f5vdi/rdp/launch/Portal_L3T/Enterprise_Remote_Desktop?{domain_b64}"
-        )
+        url = f"https://portal.l3t.com/f5vdi/rdp/launch/Portal_L3T/Enterprise_Remote_Desktop?{domain_b64}"
+
+        req = requests.Request("GET", url)
+        req = self._session.prepare_request(req)
+
+        self.log_request(req)
+        res = self._session.send(req)
+        self.log_response(res, log_content=True)
+
         if not res.ok:
             raise self.RDPRequestError()
 
@@ -318,24 +385,25 @@ def main():
     ui = UI(debug=args.verbose)
     ctx = load_context(ui, args.config)
 
-    ui.info("Connecting to portal...")
     session = PortalSession()
+    session.set_log_request_callback(ui.log_request)
+    session.set_log_response_callback(ui.log_response)
+
+    ui.info("Connecting to portal.")
+    session.connect()
     ui.success("Connected.")
+
     # Load user info right before authenticating so token doesn't expire.
     load_user_info(ui, ctx)
 
-    ui.info("Authenticating...")
+    ui.info("Authenticating.")
     session.authenticate(ctx.username, ctx.password, ctx.pin, ctx.token)
     ui.success("Authenticated.")
 
     rdp_settings = session.request_rdp_session(ctx.domain)
 
-    print(rdp_settings.__dict__)
     #with open("content", "r") as f:
     #    rdp_settings = RDPParser.parse(f.read())
-
-    rdp_settings \
-        .smartcard_logon_pin(ctx.smartcard_pin)
 
     rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
@@ -346,9 +414,10 @@ def main():
 
     rdp_session = FreeRDPSession(rdp_settings)
 
-    ui.info("Launching RDP session...")
-    ui.debug("Executing: " + " ".join(rdp_session.command))
-    #rdp_session.launch()
+    ui.info("Launching RDP session.")
+    ui.log_exec(" ".join(rdp_session.command))
+
+    rdp_session.launch()
 
 
 def get_config_path():
