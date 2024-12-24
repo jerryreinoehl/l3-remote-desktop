@@ -3,12 +3,20 @@
 Authenticate with L3 portal and launch remote desktop session.
 
 
+## Dependencies
+
+* `python3`
+* `python3-requests`
+* `freerdp`
+
+
 ## Configuration
 
 Configuration is read from
 `$XDG_CONFIG_HOME/l3-remote-desktop/l3-remote-desktop.yml`. If the
 `XDG_CONFIG_HOME` environment variable is not set then configuration is read
 from `~/.config/l3-remote-desktop/l3-remote-desktop.yml`.
+The configuration file can be overridden with the `-c` or `--config` argument.
 
 ### Configuration Options
 
