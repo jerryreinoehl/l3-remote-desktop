@@ -29,8 +29,10 @@ class Context:
 class UI:
 
     BOLD_BLACK = "1;30"
+    BOLD_RED = "1;31"
     BOLD_GREEN = "1;32"
     BOLD_CYAN = "1;36"
+    RED = "31"
     GREEN = "32"
     YELLOW = "33"
     BLUE = "34"
@@ -84,10 +86,10 @@ class UI:
         self.print("*** " + msg, color=self.BOLD_GREEN, **kwargs)
 
     def error(self, msg):
-        print("Error: " + msg)
+        self.print("!!! " + msg, color=self.RED, file=sys.stderr)
 
     def fatal(self, msg, code=1):
-        print(msg, file=sys.stderr)
+        self.error(msg)
         exit(code)
 
 
@@ -468,7 +470,11 @@ def main():
     session.set_log_response_callback(ui.log_response)
     session.set_authentication_info_callback(LoadAuthenticationInfo(ui, ctx))
 
-    rdp_settings = session.connect()
+    try:
+        rdp_settings = session.connect()
+    except PortalSession.RDPRequestError:
+        ui.fatal("Failed to authenticate.")
+
 
     if not ctx.smartcard_pin:
         ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
