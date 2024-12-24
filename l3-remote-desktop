@@ -6,6 +6,7 @@ from pathlib import Path
 import argparse
 import base64
 import getpass
+import json
 import os
 import requests
 import subprocess
@@ -301,10 +302,29 @@ class PortalSession:
 
     class RDPRequestError(PortalSessionError): ...
 
-    def __init__(self):
+    @dataclass
+    class AuthenticationInfo:
+        username: str
+        password: str
+        pin: str
+        token: str
+        vhost: str = "standard"
+
+    def __init__(self, domain, cache: Path = None):
         self._session = requests.Session()
+        self._domain = domain
+        self._cache = cache
         self._log_req_cb = None
         self._log_res_cb = None
+        self._authentication_info_cb = self._get_authentication_info
+
+    def _get_authentication_info(self):
+        username = input("Username: ")
+        password = getpass.getpass("Password: ")
+        pin = getpass.getpass("Pin: ")
+        token = input("Token: ")
+
+        return self.AuthenticationInfo(username, password, pin, token)
 
     def log_request(self, request):
         if not self._log_req_cb:
@@ -333,7 +353,10 @@ class PortalSession:
     def set_log_response_callback(self, log_res_cb):
         self._log_res_cb = log_res_cb
 
-    def connect(self):
+    def set_authentication_info_callback(self, authentication_info_cb):
+        self._authentication_info_cb = authentication_info_cb
+
+    def initialize(self):
         url = "https://portal.l3t.com/"
 
         req = requests.Request("GET", url)
@@ -348,14 +371,15 @@ class PortalSession:
         if not res.ok:
             raise self.InitializationError()
 
-    def authenticate(self, username, password, pin, token, vhost="standard"):
+    def authenticate(self):
         url = "https://portal.l3t.com/my.policy"
+        auth = self._authentication_info_cb()
 
         data = dict(
-            username=username,
-            password=password,
-            rsapassword=pin + token,
-            vhost=vhost,
+            username=auth.username,
+            password=auth.password,
+            rsapassword=auth.pin + auth.token,
+            vhost=auth.vhost,
         )
 
         req = requests.Request("POST", url, data=data)
@@ -368,8 +392,8 @@ class PortalSession:
         if not res.ok:
             raise self.AuthenticationError()
 
-    def request_rdp_session(self, domain):
-        domain_b64 = base64.b64encode(bytes(domain, "utf-8")).decode()
+    def request_rdp_session(self):
+        domain_b64 = base64.b64encode(bytes(self._domain, "utf-8")).decode()
         url = f"https://portal.l3t.com/f5vdi/rdp/launch/Portal_L3T/Enterprise_Remote_Desktop?{domain_b64}"
 
         req = requests.Request("GET", url)
@@ -384,6 +408,39 @@ class PortalSession:
 
         return RDPParser.parse(res.content.decode())
 
+    def _load_cache(self):
+        if not self._cache.exists or not self._cache.is_file():
+            return False
+
+        with self._cache.open() as f:
+            try:
+                cookies = json.loads(f.read())
+                self._session.cookies.update(
+                    requests.utils.cookiejar_from_dict(cookies)
+                )
+            except json.decoder.JSONDecodeError:
+                return False
+
+        return True
+
+    def _save_cache(self):
+        with self._cache.open("w") as f:
+            f.write(json.dumps(self._session.cookies.get_dict()))
+
+    def connect(self):
+        if self._load_cache():
+            try:
+                return self.request_rdp_session()
+            except self.RDPRequestError:
+                self._session.cookies.clear()
+
+        self.initialize()
+        self.authenticate()
+
+        self._save_cache()
+
+        return self.request_rdp_session()
+
 
 def main():
     args = parse_args()
@@ -394,32 +451,26 @@ def main():
     ui = UI(debug=args.verbose)
     ctx = load_context(ui, args.config)
 
-    session = PortalSession()
+    cache = get_cache_path()
+
+    if not ctx.domain:
+        ctx.domain = ui.input("Enter domain: ")
+
+    session = PortalSession(domain=ctx.domain, cache=cache)
     session.set_log_request_callback(ui.log_request)
     session.set_log_response_callback(ui.log_response)
+    session.set_authentication_info_callback(LoadAuthenticationInfo(ui, ctx))
 
-    ui.info("Connecting to portal.")
-    session.connect()
-    ui.success("Connected.")
-
-    # Load user info right before authenticating so token doesn't expire.
-    load_user_info(ui, ctx)
-
-    ui.info("Authenticating.")
-    session.authenticate(ctx.username, ctx.password, ctx.rsa_pin, ctx.token)
-    ui.success("Authenticated.")
-
-    rdp_settings = session.request_rdp_session(ctx.domain)
-
-    #with open("content", "r") as f:
-    #    rdp_settings = RDPParser.parse(f.read())
+    rdp_settings = session.connect()
 
     rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
     rdp_settings.security_protocol = RDPSessionSettings.SecurityProtocol.RDP
     rdp_settings.smartcard = RDPSessionSettings.Smartcard()
-    rdp_settings.smartcard_logon = RDPSessionSettings.SmartcardLogon(pin=ctx.smartcard_pin)
+    rdp_settings.smartcard_logon = RDPSessionSettings.SmartcardLogon(
+        pin=ctx.smartcard_pin
+    )
 
     rdp_session = FreeRDPSession(rdp_settings)
 
@@ -435,7 +486,16 @@ def get_config_path():
     if "XDG_CONFIG_HOME" in os.environ:
         return Path(os.environ["XDG_CONFIG_HOME"]) / config
     else:
-        return Path("~/.config") / config
+        return Path("~/.config").expanduser() / config
+
+
+def get_cache_path():
+    cache = "l3-remote-desktop.json"
+
+    if "XDG_CACHE_HOME" in os.environ:
+        return Path(os.environ["XDG_CACHE_HOME"]) / cache
+    else:
+        return Path("~/.cache").expanduser() / cache
 
 
 def load_context(ui, config):
@@ -450,6 +510,29 @@ def load_context(ui, config):
             ui.fatal(f"Failed reading config: {config}")
 
     return Context(**data)
+
+
+class LoadAuthenticationInfo:
+    def __init__(self, ui, ctx):
+        self._ui = ui
+        self._ctx = ctx
+
+    def __call__(self):
+        if self._ctx.username is None:
+            self._ctx.username = self._ui.input("Enter username: ")
+        if self._ctx.password is None:
+            self._ctx.password = self._ui.getpass("Enter password: ")
+        if self._ctx.rsa_pin is None:
+            self._ctx.rsa_pin = self._ui.getpass("Enter RSA pin: ")
+        if self._ctx.token is None:
+            self._ctx.token = self._ui.input("Enter RSA token: ")
+
+        return PortalSession.AuthenticationInfo(
+            self._ctx.username,
+            self._ctx.password,
+            self._ctx.rsa_pin,
+            self._ctx.token,
+        )
 
 
 def load_user_info(ui, ctx):
@@ -473,9 +556,7 @@ def parse_args():
         description="Launch remote desktop session.",
     )
 
-    parser.add_argument(
-        "-c", "--config", type=Path, help="Path to configuration file."
-    )
+    parser.add_argument("-c", "--config", type=Path, help="Path to configuration file.")
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output."
     )
