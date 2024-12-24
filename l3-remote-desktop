@@ -18,7 +18,7 @@ class Context:
 
     username: str = None
     password: str = None
-    pin: str = None
+    rsa_pin: str = None
     token: str = None
     domain: str = None
     smartcard_pin: str = None
@@ -397,7 +397,7 @@ def main():
     load_user_info(ui, ctx)
 
     ui.info("Authenticating.")
-    session.authenticate(ctx.username, ctx.password, ctx.pin, ctx.token)
+    session.authenticate(ctx.username, ctx.password, ctx.rsa_pin, ctx.token)
     ui.success("Authenticated.")
 
     rdp_settings = session.request_rdp_session(ctx.domain)
@@ -452,8 +452,8 @@ def load_user_info(ui, ctx):
         ctx.password = ui.getpass("Enter password: ")
     if ctx.smartcard_pin is None:
         ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
-    if ctx.pin is None:
-        ctx.pin = ui.getpass("Enter RSA pin: ")
+    if ctx.rsa_pin is None:
+        ctx.rsa_pin = ui.getpass("Enter RSA pin: ")
     if ctx.token is None:
         ctx.token = ui.input("Enter RSA token: ")
 
