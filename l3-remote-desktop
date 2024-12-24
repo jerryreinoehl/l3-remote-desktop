@@ -72,6 +72,7 @@ class RDPParser:
     @classmethod
     def parse(cls, content: str):
         settings = RDPSessionSettings()
+        settings.gateway = RDPSessionSettings.Gateway()
 
         for line in content.splitlines():
             # Each line should have <setting>:<type>:<value>.
@@ -88,9 +89,9 @@ class RDPParser:
                 case "full address":
                     settings.server(value)
                 case "gatewayaccesstoken":
-                    settings.gateway_access_token(value)
+                    settings.gateway.access_token = value
                 case "gatewayhostname":
-                    settings.gateway_hostname(value)
+                    settings.gateway.gateway = value
                 case "server port":
                     settings.port(value)
 
@@ -104,6 +105,11 @@ class RDPSessionSettings:
     SEC_NLA = "nla"
     SEC_EXT = "ext"
     SEC_AAD = "aad"
+
+    @dataclass
+    class Gateway:
+        gateway: str = None
+        access_token: str = None
 
     @dataclass
     class Floatbar:
@@ -127,12 +133,10 @@ class RDPSessionSettings:
         self._port: int = None
         self._fullscreen: bool = False
         self._clipboard: bool = False
-        self._gateway_hostname: str = None
-        self._gateway_port: int = None
-        self._gateway_access_token: str = None
         self._security_protocol: str = None
         self._smartcard: str = None
         self._smartcard_logon_pin: str = None
+        self.gateway: self.Gateway = None
         self.floatbar: self.Floatbar = None
 
     def server(self, value: str):
@@ -153,18 +157,6 @@ class RDPSessionSettings:
 
     def clipboard(self, value: bool):
         self._clipboard = value
-        return self
-
-    def gateway_hostname(self, value: str):
-        self._gateway_hostname = value
-        return self
-
-    def gateway_port(self, value: int):
-        self._gateway_port = value
-        return self
-
-    def gateway_access_token(self, value: str):
-        self._gateway_access_token = value
         return self
 
     def smartcard(self, value: str):
@@ -212,17 +204,30 @@ class FreeRDPSession:
         if self._settings._port:
             cmd.append(f"/port:{self._settings._port}")
 
-        gateway_args = dict()
-        if self._settings._gateway_hostname:
-            gateway_args["g"] = self._settings._gateway_hostname
-
-        if self._settings._gateway_access_token:
-            gateway_args["access-token"] = self._settings._gateway_access_token
-
-        cmd.append("/gateway:" + ",".join(f"{k}:{v}" for k, v in gateway_args.items()))
+        gateway = self._get_gateway_argument()
+        if gateway is not None:
+            cmd.append(gateway)
 
         print(cmd)
         return cmd
+
+    def _get_gateway_argument(self):
+        if self._settings.floatbar is None:
+            return None
+
+        args = []
+        gateway = self._settings.gateway
+
+        if gateway.gateway:
+            args.append("g:" + gateway.gateway)
+
+        if gateway.access_token:
+            args.append("access-token:" + gateway.access_token)
+
+        if not args:
+            return None
+
+        return "/gateway:" + ",".join(args)
 
     def _get_floatbar_argument(self):
         if self._settings.floatbar is None:
@@ -239,6 +244,9 @@ class FreeRDPSession:
 
         if floatbar.show is not None:
             args.append("show:" + floatbar.show.value)
+
+        if not args:
+            return None
 
         return "/floatbar:" + ",".join(args)
 
