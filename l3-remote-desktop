@@ -470,6 +470,9 @@ def main():
 
     rdp_settings = session.connect()
 
+    if not ctx.smartcard_pin:
+        ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
+
     rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
