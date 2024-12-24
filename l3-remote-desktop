@@ -455,10 +455,12 @@ def main():
     ui = UI(debug=args.verbose)
     ctx = load_context(ui, args.config)
 
-    if args.freerdp:
-        ctx.freerdp = args.freerdp
+    if args.username:
+        ctx.username = args.username
     if args.domain:
         ctx.domain = args.domain
+    if args.freerdp:
+        ctx.freerdp = args.freerdp
 
     cache = get_cache_path()
 
@@ -553,15 +555,23 @@ class LoadAuthenticationInfo:
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="L3Harris Remote Desktop",
-        description="Launch remote desktop session.",
+        description="Authenticate with L3 portal and launch remote desktop session.",
     )
 
-    parser.add_argument("-c", "--config", type=Path, help="Path to configuration file.")
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=Path,
+        help="Path to configuration file. Default is `$XDG_CONFIG_HOME/l3-remote-desktop/l3-remote-desktop.yml`",
+    )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output."
     )
-    parser.add_argument("--freerdp", help="Name of FreeRDP executable.")
-    parser.add_argument("--domain", "-d", help="RDP Domain.")
+    parser.add_argument(
+        "--freerdp", help="Name of FreeRDP executable. Default is `xfreerdp3`."
+    )
+    parser.add_argument("-u", "--username", help="L3 portal username (email address).")
+    parser.add_argument("-d", "--domain", help="RDP domain (computer name).")
 
     return parser.parse_args()
 
