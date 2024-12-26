@@ -8,7 +8,11 @@ url="https://github.com/jerryreinoehl/l3-remote-desktop"
 license=("MIT")
 depends=("python" "python-requests")
 makedepends=("git")
-optdepends=("ccid" "opensc" "pcsclite")
+optdepends=(
+	"ccid: smartcard support"
+	"opensc: smartcard support"
+	"pcsclite: smartcard support"
+)
 source=("$pkgname-$pkgver::git+https://github.com/jerryreinoehl/l3-remote-desktop#tag=v$pkgver")
 sha256sums=("SKIP")
 
