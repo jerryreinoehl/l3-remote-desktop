@@ -419,7 +419,11 @@ class PortalSession:
         return RDPParser.parse(res.content.decode())
 
     def _load_cache(self):
-        if not self._cache.exists or not self._cache.is_file():
+        is_cache_valid = (
+            self._cache and self._cache.exists() and self._cache.is_file()
+        )
+
+        if not is_cache_valid:
             return False
 
         with self._cache.open() as f:
@@ -434,6 +438,9 @@ class PortalSession:
         return True
 
     def _save_cache(self):
+        if not self._cache:
+            return
+
         with self._cache.open("w") as f:
             f.write(json.dumps(self._session.cookies.get_dict()))
 
