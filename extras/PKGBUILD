@@ -1,0 +1,18 @@
+# Maintainer: Jerry Reinoehl
+pkgname=l3-remote-desktop
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Authenticate with L3 portal and launch remote desktop session."
+arch=("any")
+url="https://github.com/jerryreinoehl/l3-remote-desktop"
+license=("MIT")
+depends=("python" "python-requests")
+makedepends=("git")
+optdepends=("ccid" "opensc" "pcsclite")
+source=("$pkgname-$pkgver::git+https://github.com/jerryreinoehl/l3-remote-desktop#tag=v$pkgver")
+sha256sums=("SKIP")
+
+package() {
+	mkdir -p "$pkgdir/usr/bin/"
+	cp "$srcdir/$pkgname-$pkgver/l3-remote-desktop" "$pkgdir/usr/bin/"
+}
