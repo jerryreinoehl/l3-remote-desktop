@@ -467,6 +467,8 @@ def main():
         ctx.domain = args.domain
     if args.freerdp:
         ctx.freerdp = args.freerdp
+    if args.token:
+        ctx.token = args.token
     if args.fullscreen:
         ctx.fullscreen = args.fullscreen
     if args.verbose:
@@ -589,6 +591,7 @@ def parse_args():
     parser.add_argument(
         "-f", "--fullscreen", action="store_true", help="Launch RDP session fullscreen."
     )
+    parser.add_argument("-t", "--token", help="RSA Token.")
 
     return parser.parse_args()
 
