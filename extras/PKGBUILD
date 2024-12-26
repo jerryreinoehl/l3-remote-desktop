@@ -6,7 +6,11 @@ pkgdesc="Authenticate with L3 portal and launch remote desktop session."
 arch=("any")
 url="https://github.com/jerryreinoehl/l3-remote-desktop"
 license=("MIT")
-depends=("python" "python-requests")
+depends=(
+	"freerdp"
+	"python"
+	"python-requests"
+)
 makedepends=("git")
 optdepends=(
 	"ccid: smartcard support"
