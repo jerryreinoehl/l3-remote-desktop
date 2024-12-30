@@ -22,5 +22,5 @@ sha256sums=("SKIP")
 
 package() {
 	mkdir -p "$pkgdir/usr/bin/"
-	cp "$srcdir/$pkgname-$pkgver/l3-remote-desktop" "$pkgdir/usr/bin/"
+	install -o root -g root -m 0755 "$srcdir/$pkgname-$pkgver/l3-remote-desktop" "$pkgdir/usr/bin/"
 }
