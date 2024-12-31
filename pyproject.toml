@@ -1,0 +1,28 @@
+[project]
+name = "l3-remote-desktop"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["requests", "pyyaml"]
+authors = [
+  {name = "Jerry Reinoehl", email = "jerryreinoehl@gmail.com"},
+]
+description = "Authenticate with L3 portal and launch remote desktop session."
+readme = "README.md"
+classifiers = [
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+]
+
+[project.scripts]
+l3-remote-desktop = "l3remotedesktop:main.main"
+
+[project.urls]
+Repository = "https://github.com/jerryreinoehl/l3-remote-desktop"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
