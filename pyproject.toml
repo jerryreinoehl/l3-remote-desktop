@@ -1,6 +1,6 @@
 [project]
 name = "l3-remote-desktop"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.10"
 dependencies = ["requests", "pyyaml"]
 authors = [

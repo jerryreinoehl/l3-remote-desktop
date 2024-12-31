@@ -1,6 +1,6 @@
 # Maintainer: Jerry Reinoehl <jerryreinoehl@gmail.com>
 pkgname=l3-remote-desktop
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="Authenticate with L3 portal and launch remote desktop session."
 arch=("any")
