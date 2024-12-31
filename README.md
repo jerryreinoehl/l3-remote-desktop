@@ -7,6 +7,7 @@ Authenticate with L3 portal and launch remote desktop session.
 
 * `python3`
 * `python3-requests`
+* `python3-yaml`
 * `freerdp`
 * `ccid` (Smartcard)
 * `opensc` (Smartcard)

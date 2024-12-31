@@ -10,6 +10,7 @@ depends=(
 	"freerdp"
 	"python"
 	"python-requests"
+	"python-yaml"
 )
 makedepends=("git")
 optdepends=(
