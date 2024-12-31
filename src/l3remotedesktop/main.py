@@ -4,6 +4,7 @@ from .rdp import (
     RDPSessionSettings,
 )
 from .ui import UI
+from .version import __version__
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,9 @@ import argparse
 import os
 import sys
 import yaml
+
+
+USER_AGENT = "l3-remote-desktop/" + __version__
 
 
 @dataclass
@@ -60,6 +64,7 @@ def main():
         ctx.domain = ui.input("Enter domain: ")
 
     session = PortalSession(domain=ctx.domain, cache=cache)
+    session.set_user_agent(USER_AGENT)
     session.set_log_request_callback(ui.log_request)
     session.set_log_response_callback(ui.log_response)
     session.set_authentication_info_callback(LoadAuthenticationInfo(ui, ctx))

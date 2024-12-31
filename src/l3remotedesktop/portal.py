@@ -43,6 +43,9 @@ class PortalSession:
 
         return self.AuthenticationInfo(username, password, pin, token)
 
+    def set_user_agent(self, user_agent: str):
+        self._session.headers["User-Agent"] = user_agent
+
     def log_request(self, request):
         if not self._log_req_cb:
             return
