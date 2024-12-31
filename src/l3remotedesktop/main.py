@@ -11,6 +11,7 @@ from pathlib import Path
 
 import argparse
 import os
+import re
 import sys
 import yaml
 
@@ -90,7 +91,7 @@ def main():
     rdp_session = FreeRDPSession(rdp_settings, freerdp_exec=ctx.freerdp)
 
     ui.info("Launching RDP session.")
-    ui.log_exec(" ".join(rdp_session.command))
+    ui.log_exec(sanitize_rdp_command(" ".join(rdp_session.command)))
 
     rdp_session.launch()
 
@@ -125,6 +126,11 @@ def load_context(ui, config):
             ui.fatal(f"Failed reading config: {config}")
 
     return Context(**data)
+
+
+def sanitize_rdp_command(command: str):
+    # Replace smartcard pin so it is not shown in plaintext.
+    return re.sub(r"(/smartcard-logon:pin:)(\d+)", r"\1********", command)
 
 
 class LoadAuthenticationInfo:
