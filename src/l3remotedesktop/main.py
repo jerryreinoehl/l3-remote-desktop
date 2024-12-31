@@ -43,6 +43,9 @@ def main():
     ui = UI()
     ctx = load_context(ui, args.config)
 
+    if args.version:
+        ui.info(f"l3-remote-desktop v{__version__}")
+        exit()
     if args.username:
         ctx.username = args.username
     if args.domain:
@@ -180,6 +183,9 @@ def parse_args():
         "-f", "--fullscreen", action="store_true", help="Launch RDP session fullscreen."
     )
     parser.add_argument("-t", "--token", help="RSA Token.")
+    parser.add_argument(
+        "-V", "--version", action="store_true", help="Print version."
+    )
 
     return parser.parse_args()
 
