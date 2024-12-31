@@ -1,4 +1,4 @@
-# Maintainer: Jerry Reinoehl
+# Maintainer: Jerry Reinoehl <jerryreinoehl@gmail.com>
 pkgname=l3-remote-desktop
 pkgver=0.1.0
 pkgrel=1
@@ -12,16 +12,27 @@ depends=(
 	"python-requests"
 	"python-yaml"
 )
-makedepends=("git")
+makedepends=(
+	"git"
+	"python-build"
+	"python-installer"
+	"python-setuptools"
+	"python-wheel"
+)
 optdepends=(
 	"ccid: smartcard support"
 	"opensc: smartcard support"
 	"pcsclite: smartcard support"
 )
-source=("$pkgname-$pkgver::git+https://github.com/jerryreinoehl/l3-remote-desktop#tag=v$pkgver")
+source=("git+https://github.com/jerryreinoehl/l3-remote-desktop#tag=v$pkgver")
 sha256sums=("SKIP")
 
+build() {
+	cd "$pkgname"
+	python -m build --wheel --no-isolation
+}
+
 package() {
-	mkdir -p "$pkgdir/usr/bin/"
-	install -o root -g root -m 0755 "$srcdir/$pkgname-$pkgver/l3-remote-desktop" "$pkgdir/usr/bin/"
+	cd "$pkgname"
+	python -m installer --destdir="$pkgdir" dist/*.whl
 }
