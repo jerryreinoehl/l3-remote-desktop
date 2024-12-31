@@ -62,7 +62,7 @@ class PortalSession:
         for k, v in response.headers.items():
             self._log_res_cb(f"{k}: {v}")
 
-        if log_content:
+        if log_content and len(response.content) > 0:
             self._log_res_cb("")
             for line in response.content.decode().splitlines():
                 self._log_res_cb(line)
