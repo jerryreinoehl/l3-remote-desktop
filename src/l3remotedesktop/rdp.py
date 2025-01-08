@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 import subprocess
 
@@ -15,7 +15,7 @@ class RDPSessionSettings:
 
     @dataclass
     class Gateway:
-        gateway: str = None
+        hostname: str = None
         access_token: str = None
         user: str = None
         password: str = None
@@ -89,7 +89,7 @@ class RDPParser:
                 case "gatewayaccesstoken":
                     settings.gateway.access_token = value
                 case "gatewayhostname":
-                    settings.gateway.gateway = value
+                    settings.gateway.hostname = value
                 case "server port":
                     settings.port = value
 
@@ -98,10 +98,18 @@ class RDPParser:
 
 class FreeRDPSession:
 
-    def __init__(self, settings: RDPSessionSettings, freerdp_exec="xfreerdp3"):
+    class FreeRDPVersion(Enum):
+        V2 = 2
+        V3 = 3
+
+    def __init__(self, settings: RDPSessionSettings, version=FreeRDPVersion.V3, freerdp_exec=None):
         self._settings = settings
         self._command = None
+
+        self._version = version
         self._freerdp_exec = freerdp_exec
+        if self._freerdp_exec is None:
+            self._freerdp_exec = "xfreerdp" if version == self.FreeRDPVersion.V2 else "xfreerdp3"
 
     @property
     def command(self):
@@ -124,27 +132,43 @@ class FreeRDPSession:
         smartcard = self._get_smartcard_argument()
         smartcard and cmd.append(smartcard)
 
-        smartcard_logon = self._get_smartcard_logon_argument()
-        smartcard_logon and cmd.append(smartcard_logon)
+        cmd.extend(self._get_smartcard_logon_arguments())
 
         self._settings.user and cmd.append("/u:" + self._settings.user)
         self._settings.server and cmd.append("/v:" + self._settings.server)
         self._settings.port and cmd.append("/port:" + str(self._settings.port))
         self._settings.domain and cmd.append("/d:" + self._settings.domain)
 
-        gateway = self._get_gateway_argument()
-        gateway and cmd.append(gateway)
+        cmd.extend(self._get_gateway_arguments())
 
         return cmd
 
-    def _get_gateway_argument(self):
-        if self._settings.floatbar is None:
-            return None
+    def _get_gateway_arguments(self):
+        if self._version == self.FreeRDPVersion.V2:
+            return self._get_gateway_arguments_v2()
+        else:
+            return self._get_gateway_arguments_v3()
+
+    def _get_gateway_arguments_v2(self):
+        if self._settings.gateway is None:
+            return []
 
         args = []
         gateway = self._settings.gateway
 
-        gateway.gateway and args.append("g:" + gateway.gateway)
+        gateway.hostname and args.append("/g:" + gateway.hostname)
+        gateway.access_token and args.append("/gat:" + gateway.access_token)
+
+        return args
+
+    def _get_gateway_arguments_v3(self):
+        if self._settings.gateway is None:
+            return []
+
+        args = []
+        gateway = self._settings.gateway
+
+        gateway.hostname and args.append("g:" + gateway.hostname)
         gateway.access_token and args.append("access-token:" + gateway.access_token)
         gateway.user and args.append("u:" + gateway.user)
         gateway.password and args.append("p:" + gateway.password)
@@ -153,7 +177,7 @@ class FreeRDPSession:
         if not args:
             return None
 
-        return "/gateway:" + ",".join(args)
+        return ["/gateway:" + ",".join(args)]
 
     def _get_floatbar_argument(self):
         if self._settings.floatbar is None:
@@ -187,9 +211,21 @@ class FreeRDPSession:
 
         return arg
 
-    def _get_smartcard_logon_argument(self):
+    def _get_smartcard_logon_arguments(self):
+        if self._version == self.FreeRDPVersion.V2:
+            return self._get_smartcard_logon_arguments_v2()
+        else:
+            return self._get_smartcard_logon_arguments_v3()
+
+    def _get_smartcard_logon_arguments_v2(self):
+        if self._settings.smartcard_logon is not None:
+            return ["/smartcard-logon"]
+        else:
+            return []
+
+    def _get_smartcard_logon_arguments_v3(self):
         if self._settings.smartcard_logon is None:
-            return None
+            return []
 
         smartcard_logon = self._settings.smartcard_logon
         args = []
@@ -200,7 +236,7 @@ class FreeRDPSession:
         if args:
             arg += ":" + ",".join(args)
 
-        return arg
+        return [arg]
 
     def launch(self):
         p = subprocess.Popen(self.command)

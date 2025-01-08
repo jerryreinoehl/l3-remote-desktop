@@ -29,7 +29,7 @@ class Context:
     domain: str = None
     smartcard_pin: str = None
 
-    freerdp: str = "xfreerdp3"
+    freerdp: str = None
     fullscreen: bool = False
     verbose: bool = False
 
@@ -78,8 +78,8 @@ def main():
     except PortalSession.RDPRequestError:
         ui.fatal("Failed to authenticate.")
 
-    if not ctx.smartcard_pin:
-        ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
+    #if not ctx.smartcard_pin:
+    #    ctx.smartcard_pin = ui.getpass("Enter smartcard pin: ")
 
     if ctx.fullscreen:
         rdp_settings.fullscreen = True
@@ -91,7 +91,8 @@ def main():
         pin=ctx.smartcard_pin
     )
 
-    rdp_session = FreeRDPSession(rdp_settings, freerdp_exec=ctx.freerdp)
+    freerdp_version = FreeRDPSession.FreeRDPVersion.V2
+    rdp_session = FreeRDPSession(rdp_settings, version=freerdp_version, freerdp_exec=ctx.freerdp)
 
     ui.info("Launching RDP session.")
     ui.log_exec(sanitize_rdp_command(" ".join(rdp_session.command)))
