@@ -29,7 +29,7 @@ class Context:
     domain: str = None
     smartcard_pin: str = None
 
-    freerdp: str = None
+    freerdp_exec: str = None
     freerdp_version: int = 3
     fullscreen: bool = False
     verbose: bool = False
@@ -51,8 +51,8 @@ def main():
         ctx.username = args.username
     if args.domain:
         ctx.domain = args.domain
-    if args.freerdp:
-        ctx.freerdp = args.freerdp
+    if args.freerdp_exec:
+        ctx.freerdp_exec = args.freerdp_exec
     if args.token:
         ctx.token = args.token
     if args.fullscreen:
@@ -97,7 +97,7 @@ def main():
     except ValueError as e:
         ui.fatal(str(e))
 
-    rdp_session = FreeRDPSession(rdp_settings, version=freerdp_version, freerdp_exec=ctx.freerdp)
+    rdp_session = FreeRDPSession(rdp_settings, version=freerdp_version, freerdp_exec=ctx.freerdp_exec)
 
     ui.info("Launching RDP session.")
     ui.log_exec(sanitize_rdp_command(" ".join(rdp_session.command)))
@@ -181,7 +181,7 @@ def parse_args():
         "-v", "--verbose", action="store_true", help="Enable verbose output."
     )
     parser.add_argument(
-        "--freerdp", help="Name of FreeRDP executable. Default is `xfreerdp3`."
+        "-x", "--freerdp-exec", help="Name of FreeRDP executable. Default is `xfreerdp3`."
     )
     parser.add_argument("-u", "--username", help="L3 portal username (email address).")
     parser.add_argument("-d", "--domain", help="RDP domain (computer name).")
