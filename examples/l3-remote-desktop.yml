@@ -9,4 +9,5 @@ smartcard_pin: "12345678"
 freerdp_version: 3
 #freerdp_exec: "xfreerdp3"
 fullscreen: true
+multimonitor: true
 verbose: true
