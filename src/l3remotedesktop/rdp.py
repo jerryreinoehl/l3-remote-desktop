@@ -55,6 +55,7 @@ class RDPSessionSettings:
         self.domain: str = None
         self.fullscreen: bool = False
         self.clipboard: bool = False
+        self.multimonitor: bool = False
         self.security_protocol: self.SecurityProtocol = None
         self.smartcard: self.Smartcard = None
         self.smartcard_logon: self.SmartcardLogon = None
@@ -131,6 +132,7 @@ class FreeRDPSession:
 
         self._settings.fullscreen and cmd.append("/f")
         self._settings.clipboard and cmd.append("/clipboard")
+        self._settings.multimonitor and cmd.append("/multimon")
 
         floatbar = self._get_floatbar_argument()
         floatbar and cmd.append(floatbar)

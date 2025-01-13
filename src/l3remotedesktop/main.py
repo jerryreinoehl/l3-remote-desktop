@@ -32,6 +32,7 @@ class Context:
     freerdp_exec: str = None
     freerdp_version: int = 3
     fullscreen: bool = False
+    multimonitor: bool = False
     verbose: bool = False
 
 
@@ -59,6 +60,8 @@ def main():
         ctx.token = args.token
     if args.fullscreen:
         ctx.fullscreen = args.fullscreen
+    if args.multimonitor:
+        ctx.multimonitor = args.multimonitor
     if args.verbose:
         ctx.verbose = args.verbose
 
@@ -88,6 +91,7 @@ def main():
         rdp_settings.fullscreen = True
     rdp_settings.clipboard = True
     rdp_settings.floatbar = RDPSessionSettings.Floatbar(sticky=False)
+    rdp_settings.multimonitor = ctx.multimonitor
     rdp_settings.security_protocol = RDPSessionSettings.SecurityProtocol.RDP
     rdp_settings.smartcard = RDPSessionSettings.Smartcard()
     rdp_settings.smartcard_logon = RDPSessionSettings.SmartcardLogon(
@@ -192,6 +196,9 @@ def parse_args():
     parser.add_argument("-d", "--domain", help="RDP domain (computer name).")
     parser.add_argument(
         "-f", "--fullscreen", action="store_true", help="Launch RDP session fullscreen."
+    )
+    parser.add_argument(
+        "-m", "--multimonitor", action="store_true", help="Enable multimonitor mode."
     )
     parser.add_argument("-t", "--token", help="RSA Token.")
     parser.add_argument(
