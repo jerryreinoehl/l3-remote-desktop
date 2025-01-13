@@ -29,7 +29,9 @@ The configuration file can be overridden with the `-c` or `--config` argument.
 * `rsa_pin: str`: RSA PIN.
 * `domain: str`: RDP domain (computer name).
 * `smartcard_pin: str`: Smartcard PIN.
-* `freerdp: str`: FreeRDP executable (defaults to `xfreerdp3`).
+* `freerdp_version: int`: FreeRDP version (defaults to `3`).
+* `freerdp_exec: str`: FreeRDP executable (defaults to `xfreerdp` when
+  `freerdp_version` is `2` and `xfreerdp3` when `freerdp_version` is `3`).
 * `fullscreen: bool`: Launch RDP in fullscreen mode.
 * `verbose: bool`: Enable verbose output.
 

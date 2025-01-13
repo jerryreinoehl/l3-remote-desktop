@@ -5,6 +5,8 @@ password: "YourComputerPassword"
 rsa_pin: "123456"
 domain: "USGVTED-ABCDEF1.gvl.is.l-3com.com"
 smartcard_pin: "12345678"
-freerdp: "xfreerdp3"
+# Set to `2` or `3`.
+freerdp_version: 3
+#freerdp_exec: "xfreerdp3"
 fullscreen: true
 verbose: true
