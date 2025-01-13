@@ -51,6 +51,8 @@ def main():
         ctx.username = args.username
     if args.domain:
         ctx.domain = args.domain
+    if args.freerdp_version:
+        ctx.freerdp_version = args.freerdp_version
     if args.freerdp_exec:
         ctx.freerdp_exec = args.freerdp_exec
     if args.token:
@@ -179,6 +181,9 @@ def parse_args():
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose output."
+    )
+    parser.add_argument(
+        "-w", "--freerdp-version", type=int, help="FreeRDP version. Default is `3`."
     )
     parser.add_argument(
         "-x", "--freerdp-exec", help="Name of FreeRDP executable. Default is `xfreerdp3`."
