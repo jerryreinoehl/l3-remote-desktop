@@ -92,7 +92,11 @@ def main():
         pin=ctx.smartcard_pin
     )
 
-    freerdp_version = FreeRDPSession.FreeRDPVersion.from_int(ctx.freerdp_version)
+    try:
+        freerdp_version = FreeRDPSession.FreeRDPVersion.from_int(ctx.freerdp_version)
+    except ValueError as e:
+        ui.fatal(str(e))
+
     rdp_session = FreeRDPSession(rdp_settings, version=freerdp_version, freerdp_exec=ctx.freerdp)
 
     ui.info("Launching RDP session.")
