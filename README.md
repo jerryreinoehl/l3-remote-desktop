@@ -33,6 +33,7 @@ The configuration file can be overridden with the `-c` or `--config` argument.
 * `freerdp_exec: str`: FreeRDP executable (defaults to `xfreerdp` when
   `freerdp_version` is `2` and `xfreerdp3` when `freerdp_version` is `3`).
 * `fullscreen: bool`: Launch RDP in fullscreen mode.
+* `multimonitor: bool`: Enable multimonitor mode.
 * `verbose: bool`: Enable verbose output.
 
 
