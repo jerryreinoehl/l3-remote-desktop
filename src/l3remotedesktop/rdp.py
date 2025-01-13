@@ -102,6 +102,15 @@ class FreeRDPSession:
         V2 = 2
         V3 = 3
 
+        @classmethod
+        def from_int(cls, version: int):
+            if version == 2:
+                return cls.V2
+            elif version == 3:
+                return cls.V3
+            else:
+                raise ValueError(f"Version {version} is not a valid FreeRDP version.")
+
     def __init__(self, settings: RDPSessionSettings, version=FreeRDPVersion.V3, freerdp_exec=None):
         self._settings = settings
         self._command = None
