@@ -132,7 +132,7 @@ class FreeRDPSession:
 
         self._settings.fullscreen and cmd.append("/f")
         self._settings.clipboard and cmd.append("/clipboard")
-        self._settings.multimonitor and cmd.append("/multimon")
+        self._settings.multimonitor and cmd.append("/multimon:force")
 
         floatbar = self._get_floatbar_argument()
         floatbar and cmd.append(floatbar)
